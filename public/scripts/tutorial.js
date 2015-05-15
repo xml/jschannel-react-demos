@@ -8,42 +8,44 @@ For our comment box example, we'll have the following component structure:
 
 */
 
-// First, define the basic version of the main 'CommentBox' element:
 var CommentBox = React.createClass({
   render: function() {
     return (
       <div className="commentBox">
-        Hello, world! I am a CommentBox.
+        <h1>Comments</h1>
+        {/* here's where we invoke the new components we're defining below: */}
+        {/* (Note this special syntax for child comments.) */}
+        <CommentList />
+        <CommentForm />
       </div>
     );
   }
 });
 
-// Now tell React to create and render it. We're saying here:
-// 1. Call the render function of the Component called 'CommentBox'
-// 2. Place the rendered component inside the #content element
+// Now, let's create some additional components that we're going to
+// nest inside the main element: "composition"
+var CommentList = React.createClass({
+  render: function() {
+    return (
+      <div className="commentList">
+        Hello, world! I am a CommentList.
+      </div>
+    );
+  }
+});
+
+var CommentForm = React.createClass({
+  render: function() {
+    return (
+      <div className="commentForm">
+        Hello, world! I am a CommentForm.
+      </div>
+    );
+  }
+});
+
+
 React.render(
   <CommentBox />,
   document.getElementById('content')
 );
-
-/* Note that the JSXTransformer will translate the above to:
-
-    var CommentBox = React.createClass({displayName: 'CommentBox',
-      render: function() {
-        return (
-          React.createElement('div', {className: "commentBox"},
-            "Hello, world! I am a CommentBox."
-          )
-        );
-      }
-    });
-    React.render(
-      React.createElement(CommentBox, null),
-      document.getElementById('content')
-    );
-
-
-Read more about JSX at: 
-https://facebook.github.io/react/docs/jsx-in-depth.html
-*/
