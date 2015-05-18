@@ -8,6 +8,12 @@ For our comment box example, we'll have the following component structure:
 
 */
 
+// let's make our data a bit more modular:
+var commentData = [
+  {author: "Pete Hunt", text: "This is one comment"},
+  {author: "Jordan Walke", text: "This is *another* comment"}
+];
+
 var Comment = React.createClass({
   render: function() {
     var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
@@ -16,28 +22,7 @@ var Comment = React.createClass({
         <h2 className="commentAuthor">
           {this.props.author}
         </h2>
-          {/* 
-          We actually want our children parsed as Markdown text,
-          using the Marked library, which is already active on index.html. 
-
-          BUT, this code:
-            {marked(this.props.children.toString())}
-          doesn't work, does it? By default, React just doesn't like HTML strings 
-          and won't parse them at runtime. (See: XSS) Remember: React is about 
-          composing *everything* in javascript, and JSX is just a way of creating 
-          that javascript.
-          Fortunately, React gives us an API for overriding this prejudice, so 
-          you can use things like Markdown, with `dangerouslySetInnerHTML`. See:
-          https://facebook.github.io/react/tips/dangerously-set-inner-html.html
-          */}
-         <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
-         {/* 
-         Note that "{{__html: rawMarkup}}" is *not* an Angular-style double-brackets
-         interpolation. It's a React expression containing an object literal. 
-
-         Also note: we're passing our string to Marked and telling it to sanitize
-         it's inputs, up before the return statement in this `render()` method.. 
-         */}
+        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
       </div>
     );
   }
@@ -48,7 +33,8 @@ var CommentBox = React.createClass({
     return (
       <div className="commentBox">
         <h1>Comments</h1>
-        <CommentList />
+        {/* get our data into the CommentList where it's declared: */}
+        <CommentList commentData={this.props.commentData}/>
         <CommentForm />
       </div>
     );
@@ -57,10 +43,20 @@ var CommentBox = React.createClass({
 
 var CommentList = React.createClass({
   render: function() {
+    /* 
+      We need to create a comment component for each member of the data array: 
+      (We're using `map()`, which is the same as `forEach()` or a loop.)
+    */
+    var commentNodes = this.props.commentData.map(function (comment) {
+      return (
+        <Comment author={comment.author}>
+          {comment.text}
+        </Comment>
+      );
+    });
     return (
       <div className="commentList">
-        <Comment author="Pete Hunt">This is one comment</Comment>
-        <Comment author="Jaamal Walker">This is *another* comment</Comment>
+        {commentNodes}
       </div>
     );
   }
@@ -78,6 +74,7 @@ var CommentForm = React.createClass({
 
 
 React.render(
-  <CommentBox />,
+  /* Data is first passed to the CommentBox, then into the CommentList */
+  <CommentBox commentData={commentData} />,
   document.getElementById('content')
 );
