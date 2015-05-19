@@ -43,12 +43,36 @@ var CommentBox = React.createClass({
       }.bind(this),
     });
   },
+  handleCommentSubmit: function(comment) {
+    // Send the new comment back to the server. Nothing fancy.
+    // Warning: the server will write to the JSON file. You'll need to stash
+    // or reset changes to that, in order to progress to the next commit. 
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      type: 'POST',
+      data: comment,
+      success: function(data) {
+        this.setState({commentData: data});
+      }.bind(this),
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this),
+    });
+  },
   render: function() {
     return (
       <div className="commentBox">
         <h1>Comments</h1>
         <CommentList commentData={this.state.commentData}/>
-        <CommentForm />
+      {/* There's not actually an event called 'onCommentSubmit'. Rather,
+          we're creating a prop with that name on the CommentForm component, 
+          and assigning to it a reference to the CommentBox's 
+          handleCommentSubmit method. This way, we can notify the CommentBox
+          about new comments, allowing the CommentBox to be the custodian
+          of our Comment data.
+      */}
+        <CommentForm onCommentSubmit={this.handleCommentSubmit} />
       </div>
     );
   }
@@ -74,24 +98,20 @@ var CommentList = React.createClass({
 var CommentForm = React.createClass({
   handleSubmit: function(e) {
     e.preventDefault();
-    // Note that React.findDOMNode() isn't like JQuery: it's finding a React
-    // component, then reading its node reference, not searching the DOM. 
-    // We use the ref attribute to assign a name to a child component 
-    // and this.refs to reference the component.
     var author = React.findDOMNode(this.refs.author).value.trim();
     var text = React.findDOMNode(this.refs.text).value.trim();
     if (!text || !author) {
       return;
     }
-    // Clear the inputs in the DOM. (They're not bound directly to any models,
-    // so there's no need to deal with that.)
+    // from the form, notify CommentBox about new comment values:
+    this.props.onCommentSubmit({author: author, text: text});
+
     React.findDOMNode(this.refs.author).value = '';
     React.findDOMNode(this.refs.text).value = '';
     return;
   },
   render: function() {
     return (
-      {/* `onSubmit` is a React-specific event handler: */}
       <form className="commentForm" onSubmit={this.handleSubmit}>
         <h2 className="commentForm__header">Post a New Comment</h2>
         <input type="text" placeholder="Your name" ref="author" />
