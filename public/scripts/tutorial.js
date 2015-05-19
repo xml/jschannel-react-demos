@@ -72,13 +72,30 @@ var CommentList = React.createClass({
 });
 
 var CommentForm = React.createClass({
+  handleSubmit: function(e) {
+    e.preventDefault();
+    // Note that React.findDOMNode() isn't like JQuery: it's finding a React
+    // component, then reading its node reference, not searching the DOM. 
+    // We use the ref attribute to assign a name to a child component 
+    // and this.refs to reference the component.
+    var author = React.findDOMNode(this.refs.author).value.trim();
+    var text = React.findDOMNode(this.refs.text).value.trim();
+    if (!text || !author) {
+      return;
+    }
+    // Clear the inputs in the DOM. (They're not bound directly to any models,
+    // so there's no need to deal with that.)
+    React.findDOMNode(this.refs.author).value = '';
+    React.findDOMNode(this.refs.text).value = '';
+    return;
+  },
   render: function() {
-    // at last, we build out the Comment Form:
     return (
-      <form className="commentForm">
+      {/* `onSubmit` is a React-specific event handler: */}
+      <form className="commentForm" onSubmit={this.handleSubmit}>
         <h2 className="commentForm__header">Post a New Comment</h2>
-        <input type="text" placeholder="Your name" />
-        <input type="text" placeholder="Say something..." />
+        <input type="text" placeholder="Your name" ref="author" />
+        <input type="text" placeholder="Say something..." ref="text"/>
         <input type="submit" value="Post" />
       </form>
     );
