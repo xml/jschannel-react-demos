@@ -44,18 +44,28 @@ var CommentBox = React.createClass({
     });
   },
   handleCommentSubmit: function(comment) {
-    // Send the new comment back to the server. Nothing fancy.
-    // Warning: the server will write to the JSON file. You'll need to stash
-    // or reset changes to that, in order to progress to the next commit. 
+    // For 'Optimistic Updates', we update the state immediately.
+    // Start with a reference to the current comments array:
+    var comments = this.state.commentData;
+    // Make a copy and add the new comment to that:
+    var newComments = comments.concat([comment]);
+    // then update the state with it, which will render() immediately:
+    this.setState({commentData: newComments});
+    // ...aaaand, note that it will render *again* after the POST operation
+    // returns and fires its callback, thus ensuring consistency. 
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       type: 'POST',
       data: comment,
       success: function(data) {
+        // We receive a full version of the comments array on POST,
+        // with which we update the state.
         this.setState({commentData: data});
       }.bind(this),
       error: function(xhr, status, err) {
+        // (In an ideal world, we'd delete/flag any optimistically-rendered 
+        // comment if the POST operation fails.)
         console.error(this.props.url, status, err.toString());
       }.bind(this),
     });
@@ -65,13 +75,6 @@ var CommentBox = React.createClass({
       <div className="commentBox">
         <h1>Comments</h1>
         <CommentList commentData={this.state.commentData}/>
-      {/* There's not actually an event called 'onCommentSubmit'. Rather,
-          we're creating a prop with that name on the CommentForm component, 
-          and assigning to it a reference to the CommentBox's 
-          handleCommentSubmit method. This way, we can notify the CommentBox
-          about new comments, allowing the CommentBox to be the custodian
-          of our Comment data.
-      */}
         <CommentForm onCommentSubmit={this.handleCommentSubmit} />
       </div>
     );
@@ -103,9 +106,8 @@ var CommentForm = React.createClass({
     if (!text || !author) {
       return;
     }
-    // from the form, notify CommentBox about new comment values:
-    this.props.onCommentSubmit({author: author, text: text});
 
+    this.props.onCommentSubmit({author: author, text: text});
     React.findDOMNode(this.refs.author).value = '';
     React.findDOMNode(this.refs.text).value = '';
     return;
