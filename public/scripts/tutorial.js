@@ -8,11 +8,6 @@ For our comment box example, we'll have the following component structure:
 
 */
 
-var commentData = [
-  {author: "Pete Hunt", text: "This is one comment"},
-  {author: "Jordan Walke", text: "This is *another* comment"}
-];
-
 var Comment = React.createClass({
   render: function() {
     var rawMarkup = marked(this.props.children.toString(), {sanitize: true});
@@ -28,25 +23,41 @@ var Comment = React.createClass({
 });
 
 var CommentBox = React.createClass({
-  // getInitialState() is a default React method, like render(). 
-  // It's how you establish any State variables that will be monitored for
-  // changes by the component. It fires automatically at creation time.
-  // The difference between state and props is crucial. See render() for detail
   getInitialState: function() {
     return {commentData: []};
+  },
+  /* 
+    componentDidMount() is a default React method. It fires after component 
+    creation is complete. Because it fires after creation, it must operate
+    on state, not props.
+  */
+  componentDidMount: function() {
+    // obtain our data, using JQuery.
+    this.loadCommentsFromServer();
+    // refresh the data on an interval:
+    setInterval(this.loadCommentsFromServer, this.props.pollInterval);
+  },
+  // our own custom method for data loading:
+  loadCommentsFromServer: function() {
+    $.ajax({
+      url: this.props.url,
+      dataType: 'json',
+      cache: false,
+      success: function(data) {
+        // CRITICAL: once the data is obtained, update the component's
+        // *state* with it. Which will trigger a re-render. 
+        this.setState({commentData: data});
+      }.bind(this), // making sure that 'this' will mean the CommentBox
+      error: function(xhr, status, err) {
+        console.error(this.props.url, status, err.toString());
+      }.bind(this) // making sure that 'this' will mean the CommentBox
+    });
   },
   render: function() {
     return (
       <div className="commentBox">
         <h1>Comments</h1>
-        {/* 
-            And here, we pass the Commentbox's *state* data 
-            into the CommentList, but as a *prop*. The one is mutable. 
-            The other is not! Thus, updating CommentBox.state.commentData
-            will result in a simple re-render on CommentBox. But that 
-            *re-creates* the CommentList from scratch, with immutable data.
-        */}
-        <CommentList commentData={this.state.commentData} />
+        <CommentList commentData={this.state.commentData}/>
         <CommentForm />
       </div>
     );
@@ -80,8 +91,15 @@ var CommentForm = React.createClass({
   }
 });
 
-
+/* 
+  Rather than explicitly passing a data array, we now just pass a URL, 
+  and allow the component to obtain its own data.
+  NOTE: the server must be up and running for this to work.
+  Also, the pollInterval means you can modify comments.json, and
+  should see the browser update automagically. Try it!
+*/
 React.render(
-  <CommentBox commentData={commentData} />,
+  <CommentBox url="comments.json"  pollInterval={2000} />,
   document.getElementById('content')
 );
+
