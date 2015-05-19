@@ -8,7 +8,6 @@ For our comment box example, we'll have the following component structure:
 
 */
 
-// let's make our data a bit more modular:
 var commentData = [
   {author: "Pete Hunt", text: "This is one comment"},
   {author: "Jordan Walke", text: "This is *another* comment"}
@@ -29,12 +28,25 @@ var Comment = React.createClass({
 });
 
 var CommentBox = React.createClass({
+  // getInitialState() is a default React method, like render(). 
+  // It's how you establish any State variables that will be monitored for
+  // changes by the component. It fires automatically at creation time.
+  // The difference between state and props is crucial. See render() for detail
+  getInitialState: function() {
+    return {commentData: []};
+  },
   render: function() {
     return (
       <div className="commentBox">
         <h1>Comments</h1>
-        {/* get our data into the CommentList where it's declared: */}
-        <CommentList commentData={this.props.commentData}/>
+        {/* 
+            And here, we pass the Commentbox's *state* data 
+            into the CommentList, but as a *prop*. The one is mutable. 
+            The other is not! Thus, updating CommentBox.state.commentData
+            will result in a simple re-render on CommentBox. But that 
+            *re-creates* the CommentList from scratch, with immutable data.
+        */}
+        <CommentList commentData={this.state.commentData} />
         <CommentForm />
       </div>
     );
@@ -43,10 +55,6 @@ var CommentBox = React.createClass({
 
 var CommentList = React.createClass({
   render: function() {
-    /* 
-      We need to create a comment component for each member of the data array: 
-      (We're using `map()`, which is the same as `forEach()` or a loop.)
-    */
     var commentNodes = this.props.commentData.map(function (comment) {
       return (
         <Comment author={comment.author}>
@@ -74,7 +82,6 @@ var CommentForm = React.createClass({
 
 
 React.render(
-  /* Data is first passed to the CommentBox, then into the CommentList */
   <CommentBox commentData={commentData} />,
   document.getElementById('content')
 );
