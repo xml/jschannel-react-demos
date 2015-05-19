@@ -26,31 +26,21 @@ var CommentBox = React.createClass({
   getInitialState: function() {
     return {commentData: []};
   },
-  /* 
-    componentDidMount() is a default React method. It fires after component 
-    creation is complete. Because it fires after creation, it must operate
-    on state, not props.
-  */
   componentDidMount: function() {
-    // obtain our data, using JQuery.
     this.loadCommentsFromServer();
-    // refresh the data on an interval:
     setInterval(this.loadCommentsFromServer, this.props.pollInterval);
   },
-  // our own custom method for data loading:
   loadCommentsFromServer: function() {
     $.ajax({
       url: this.props.url,
       dataType: 'json',
       cache: false,
       success: function(data) {
-        // CRITICAL: once the data is obtained, update the component's
-        // *state* with it. Which will trigger a re-render. 
         this.setState({commentData: data});
-      }.bind(this), // making sure that 'this' will mean the CommentBox
+      }.bind(this),
       error: function(xhr, status, err) {
         console.error(this.props.url, status, err.toString());
-      }.bind(this) // making sure that 'this' will mean the CommentBox
+      }.bind(this),
     });
   },
   render: function() {
@@ -83,21 +73,18 @@ var CommentList = React.createClass({
 
 var CommentForm = React.createClass({
   render: function() {
+    // at last, we build out the Comment Form:
     return (
-      <div className="commentForm">
-        Hello, world! I am a CommentForm.
-      </div>
+      <form className="commentForm">
+        <h2 className="commentForm__header">Post a New Comment</h2>
+        <input type="text" placeholder="Your name" />
+        <input type="text" placeholder="Say something..." />
+        <input type="submit" value="Post" />
+      </form>
     );
   }
 });
 
-/* 
-  Rather than explicitly passing a data array, we now just pass a URL, 
-  and allow the component to obtain its own data.
-  NOTE: the server must be up and running for this to work.
-  Also, the pollInterval means you can modify comments.json, and
-  should see the browser update automagically. Try it!
-*/
 React.render(
   <CommentBox url="comments.json"  pollInterval={2000} />,
   document.getElementById('content')
